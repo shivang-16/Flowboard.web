@@ -1,0 +1,203 @@
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { createTask } from '@/actions/task_action';
+import toast from 'react-hot-toast';
+import { IUser } from '@/components/types';
+
+export type Priority = 'high' | 'medium' | 'low';
+
+interface CreateTaskDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  boardId: string;
+  columnId: string;
+  users?: Array<{ id: string; name: string }>;
+}
+
+const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ 
+  open, 
+  onOpenChange, 
+  boardId,
+  columnId,
+  users
+}) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
+  const [assignedTo, setAssignedTo] = useState<string>('');
+  const [dueDate, setDueDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!title.trim()) {
+      toast.error('Task title is required');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const res = await createTask({
+        name: title.trim(),
+        description: description.trim(),
+        assignedTo: assignedTo || undefined,
+        priority,
+        dueDate: dueDate || undefined,
+        status: columnId,
+        projectId: boardId
+      });
+
+      if(res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+
+      }
+
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setPriority('medium');
+      setAssignedTo('');
+      setDueDate('');
+      onOpenChange(false);
+    } catch (error) {
+      toast.error('Failed to create task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isSubmitting) {
+      onOpenChange(newOpen);
+      if (!newOpen) {
+        setTitle('');
+        setDescription('');
+        setPriority('medium');
+        setAssignedTo('');
+        setDueDate('');
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Create New Task</DialogTitle>
+            <DialogDescription>
+              Add a new task to organize your work and collaborate with your team.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter task title..."
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter task description..."
+                rows={3}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select value={priority} onValueChange={(value: Priority) => setPriority(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* <div className="grid gap-2">
+                <Label htmlFor="assignedTo">Assign To</Label>
+                <Select value={assignedTo} onValueChange={setAssignedTo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div> */}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="dueDate">Due Date</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                disabled={isSubmitting}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !title.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSubmitting ? 'Creating...' : 'Create Task'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default CreateTaskDialog;
