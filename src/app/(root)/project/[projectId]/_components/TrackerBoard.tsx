@@ -54,6 +54,9 @@ export default function TrackerBoard() { // Remove params from here
   const [jobsCache, setJobsCache] = useState<Job[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true); // Add loading state for tasks
   const [loadingProject, setLoadingProject] = useState(true); // Add loading state for project
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [userFilter, setUserFilter] = useState<string>('');
 
   console.log(project)
 
@@ -98,6 +101,7 @@ const fetchTasks = async () => {
   } finally {
     setLoadingTasks(false); // Set loading to false after fetching tasks
   }
+
 };
 
 useEffect(() => {
@@ -136,6 +140,24 @@ useEffect(() => {
       fetchTasks(); 
     }
   }, [isModalOpen, project]); 
+
+
+
+useEffect(() => {
+  const handleTaskUpdate = () => {
+    fetchTasks();
+    if (project) {
+      getProjects(projectId).then(res => {
+        if (res.success) setProject(res.project);
+      });
+    }
+  };
+  
+  window.addEventListener('task-updated', handleTaskUpdate);
+  return () => {
+    window.removeEventListener('task-updated', handleTaskUpdate);
+  };
+}, [projectId]); 
 
   const handleAddColumn = () => {
     const newColumnName = `new-column-${columnNames.length + 1}`;
@@ -229,10 +251,35 @@ useEffect(() => {
     }
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handlePriorityFilter = (priority: string) => {
+    setPriorityFilter(priority);
+  };
+
+  const handleUserFilter = (userId: string) => {
+    setUserFilter(userId);
+  };
+
+  const filterTasks = (tasksToFilter: Task[]) => {
+    return tasksToFilter.filter(task => {
+      const matchesSearch = searchQuery === '' || task.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPriority = priorityFilter === '' || task.priority.toLowerCase() === priorityFilter.toLowerCase();
+      const matchesUser = userFilter === '' || (task.assignedTo && task.assignedTo._id === userFilter);
+      return matchesSearch && matchesPriority && matchesUser;
+    });
+  };
+
   return (
     <div className="flex flex-col w-full h-[91vh] overflow-hidden pl-8">
-      <Header project={project}/>
-
+<Header 
+  project={project} 
+  onSearch={setSearchQuery}
+  onPriorityFilter={setPriorityFilter}
+  onUserFilter={setUserFilter}
+/>
       <div className="flex-1 overflow-hidden mt-3">
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="flex gap-6 w-full h-full overflow-x-auto">

@@ -13,14 +13,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createTask } from '@/actions/task_action';
+import { createTask, getTasksByProjectId, updateTask } from '@/actions/task_action';
 import toast from 'react-hot-toast';
-import { IUser } from '@/components/types';
+import { IUser } from '@/types';
 import { getUsersByProjectId } from '@/actions/user_actions'; // Import the action
 
 export type Priority = 'high' | 'medium' | 'low';
 
 interface CreateTaskDialogProps {
+  initialData?: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   boardId: string;
@@ -29,17 +30,18 @@ interface CreateTaskDialogProps {
 }
 
 const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
+  initialData, // Add this prop
   open,
   onOpenChange,
   boardId,
   columnId,
   // users // Remove this prop
 }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [assignedTo, setAssignedTo] = useState<string>('');
-  const [dueDate, setDueDate] = useState('');
+  const [title, setTitle] = useState(initialData?.name || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [priority, setPriority] = useState<Priority>(initialData?.priority || 'medium');
+  const [assignedTo, setAssignedTo] = useState(initialData?.assignedTo?._id || '');
+  const [dueDate, setDueDate] = useState(initialData?.dueDate?.split('T')[0] || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [projectUsers, setProjectUsers] = useState<IUser[]>([]); // New state for project users
 
@@ -69,7 +71,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
     setIsSubmitting(true);
     
     try {
-      const res = await createTask({
+      const taskData = {
         name: title.trim(),
         description: description.trim(),
         assignedTo: assignedTo || undefined,
@@ -77,11 +79,16 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
         dueDate: dueDate || undefined,
         status: columnId,
         projectId: boardId
-      });
+      };
+
+      const res = initialData 
+        ? await updateTask(initialData._id, taskData)
+        : await createTask(taskData);
 
       if(res.success) {
         toast.success(res.message);
-      } else {
+        window.dispatchEvent(new Event('task-updated'));
+     } else {
         toast.error(res.message);
 
       }
@@ -118,7 +125,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
       <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Task</DialogTitle>
+            <DialogTitle>{initialData ? 'Edit Task' : 'Create New Task'}</DialogTitle>
             <DialogDescription>
               Add a new task to organize your work and collaborate with your team.
             </DialogDescription>
@@ -214,7 +221,9 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
               disabled={isSubmitting || !title.trim()}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {isSubmitting ? 'Creating...' : 'Create Task'}
+              {isSubmitting 
+                ? (initialData ? 'Updating...' : 'Creating...') 
+                : (initialData ? 'Update Task' : 'Create Task')}
             </Button>
           </DialogFooter>
         </form>

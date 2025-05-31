@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { tags, users } from './data';
+import { tags } from './data'; // Remove 'users' import from here
+import {IUser} from "@/types"; // Import User type
 
 interface Project {
   _id: string;
@@ -20,10 +21,14 @@ interface Project {
 
 interface HeaderProps {
   project: Project | null;
+  onSearch: (query: string) => void;
+  onPriorityFilter: (priority: string) => void;
+  onUserFilter: (userId: string) => void;
+  users?: IUser[]; // Add users prop
 }
 
-export const Header: React.FC<HeaderProps> = ({ project }) => {
-  console.log(project, "here");
+export const Header: React.FC<HeaderProps> = ({ project, onSearch, onPriorityFilter, onUserFilter, users }) => {
+   
   return (
     <div className="mb-3">
       {/* Upper part with gradient background */}
@@ -43,11 +48,12 @@ export const Header: React.FC<HeaderProps> = ({ project }) => {
           <div className="flex items-center gap-3">
             <div className="flex items-center">
               <div className="flex -space-x-2 mr-2">
-                {users.map((user) => (
+                {/* Display project members from the 'users' prop */}
+                {users && users.map((user) => (
                   <img
-                    key={user.id}
-                    src={user.avatar}
-                    alt={user.name}
+                    key={user._id} // Use user._id as key
+                    src={user.avatar || '/assets/default-profile.png'} // Use default avatar if not available
+                    alt={user.firstname}
                     className="w-8 h-8 rounded-full border-2 border-white/10"
                   />
                 ))}
@@ -66,20 +72,27 @@ export const Header: React.FC<HeaderProps> = ({ project }) => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-white/80">Priority</span>
-              <span className="px-2 py-1 text-sm bg-white/10 text-white rounded">High</span>
+              <select 
+                onChange={(e) => onPriorityFilter(e.target.value)}
+                className="px-2 py-1 text-sm bg-white/10 text-white rounded border-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="">All</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white/80">Tags</span>
-              <div className="flex gap-1">
-                {tags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className={`px-2 py-1 text-sm rounded bg-white/10 text-white`}
-                  >
-                    {tag.name}
-                  </span>
+              <span className="text-sm font-medium text-white/80">Assigned To</span>
+              <select 
+                onChange={(e) => onUserFilter(e.target.value)}
+                className="px-2 py-1 text-sm bg-white/10 text-white rounded border-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="">All</option>
+                {users && users.map(user => (
+                  <option key={user._id} value={user._id}>{user.firstname}</option> // Use user._id and user.name
                 ))}
-              </div>
+              </select>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -87,7 +100,8 @@ export const Header: React.FC<HeaderProps> = ({ project }) => {
               <Search className="w-4 h-4 text-white/60 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Type to search..."
+                placeholder="Search tasks..."
+                onChange={(e) => onSearch(e.target.value)}
                 className="pl-9 pr-4 py-2 w-64 text-sm bg-white/10 border-none text-white placeholder-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
               />
             </div>

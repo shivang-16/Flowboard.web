@@ -7,6 +7,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/types';
 import toast from 'react-hot-toast';
+import { assignUserToTask, getUsersByProjectId } from '@/actions/user_actions';
+import { IUser } from '@/types';
+import { deleteTask } from '@/actions/task_action';
+import CreateTaskDialog from './CreateTaskModel';
+
 
 interface TaskCardProps {
   task: Task;
@@ -16,15 +21,39 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex }) => {
+  const [showUserList, setShowUserList] = useState(false);
+  const [users, setUsers] = useState<IUser[]>([]);
+
+  const handleAvatarClick = async () => {
+    try {
+      const res = await getUsersByProjectId(boardId);
+      console.log("===", users);
+      setUsers(res.users);
+      setShowUserList(true);
+    } catch (error) {
+      toast.error('Failed to load users');
+    }
+  };
   const [showEditTask, setShowEditTask] = useState(false);
   const [showDeleteTask, setShowDeleteTask] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
   console.log(task, "here is the task")
 
-  const handleDeleteTask = () => {
-    // deleteTask(boardId, columnId, task.id);
-    toast.success("Task delted");
+  const handleDeleteTask = async() => {
+    try {
+      const res = await deleteTask(task._id);
+      window.dispatchEvent(new CustomEvent('task-updated', {
+        detail: { taskId: task._id }
+      }));
+      if(res.success) {
+        toast.success(res.message || 'Task deleted successfully');
+      } else {
+        toast.error(res.message || 'Failed to delete task');
+      }
+    } catch (error) {
+      toast.error('Failed to delete task');
+    }
   };
 
   const getUser = (userId: string) => {
@@ -67,6 +96,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
         return '';
     }
   };
+
+  const handleAssignUser = async (userId: string) => {
+    try {
+      await assignUserToTask(task._id, userId);
+      setShowUserList(false);
+      window.dispatchEvent(new CustomEvent('task-updated', {
+        detail: { taskId: task._id }
+      }));
+      toast.success('User assigned successfully');
+    } catch (error) {
+      toast.error('Failed to assign user');
+    }
+  };
+  
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -114,7 +157,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowDeleteTask(true);
+                  handleDeleteTask();
                 }}
                 className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
               >
@@ -140,12 +183,44 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
               >
                 {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
               </Badge>
-              <Move className="w-4 h-4 text-gray-400" />
+              <div className="relative">
+                <Avatar 
+                  className="w-5 h-5 cursor-pointer bg-gray-300"
+                  onClick={handleAvatarClick}
+                >
+                  <AvatarFallback className="text-xs text-gray-600">
+                    {task.assignedTo ? task.assignedTo.firstname[0] : '+'}
+                  </AvatarFallback>
+                </Avatar>
+                
+                {showUserList && (
+                  <div className="absolute right-0 mt-1 w-40 bg-slate-950 rounded-md shadow-lg z-10 border border-gray-200">
+                    <div className="py-1">
+                   
+                      {users.map(user => (
+                        <div 
+                          key={user._id}
+                          className="px-3 py-1 text-sm hover:bg-slate-700 cursor-pointer flex items-center gap-2"
+                          onClick={() => handleAssignUser(user._id)}
+                        >
+                          <Avatar className="w-4 h-4">
+                            <AvatarFallback className="text-xs">
+                              {user.firstname[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{user.firstname}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             </div>
 
             {/* Due Date */}
             {task.dueDate && (
-              <div className={`flex items-center text-xs ${
+              <div className={`flex items-center my-2 text-xs ${
                 isOverdue ? 'text-red-600' : 'text-gray-600'
               }`}>
                 <Calendar className="w-3 h-3 mr-1" />
@@ -158,7 +233,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
 
             {/* Assigned To */}
             {assignedToUser && (
-              <div className="flex items-center text-xs text-gray-600">
+              <div className="flex items-center my-2 text-xs text-gray-600">
                 <Avatar className="w-5 h-5 mr-2">
                   <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
                     {assignedToUser.avatar || assignedToUser.firstname}
@@ -173,11 +248,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
               <User className="w-3 h-3 mr-1" />
               <span>Created by {createdByUser?.firstname || 'Unknown'}</span>
             </div>
-          </div>
         </CardContent>
       </Card>
 
-   
+      {showEditTask && (
+        <CreateTaskDialog
+          initialData={task}
+          open={showEditTask}
+          onOpenChange={() => setShowEditTask(false)}
+          boardId={boardId}
+          columnId={columnId}
+        />
+      )}
     </>
   );
 };
