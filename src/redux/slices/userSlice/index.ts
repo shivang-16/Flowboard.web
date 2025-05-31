@@ -1,4 +1,4 @@
-import { IUser } from "@/components/types";
+import { IUser } from "@/types";
 import { createSlice } from "@reduxjs/toolkit";
 
 export interface UserProps {
