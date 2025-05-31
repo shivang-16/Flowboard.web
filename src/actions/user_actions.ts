@@ -89,3 +89,100 @@ export const getUser = async () => {
       console.log(error)
   };
 }
+
+export const getAllUsers = async () => {
+  const token = await getCookie("token");
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `token=${token}`,
+        },
+        credentials: "include",
+        next: {
+          tags: ["allUsers"],
+        },
+      }
+    );
+
+    const data = await res.json();
+    return data;
+  } catch (error: unknown) {
+    console.log(error);
+  }
+};
+
+export const getUsersByProjectId = async (projectId: string) => {
+  const token = await getCookie("token");
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/project/${projectId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `token=${token}`,
+        },
+        credentials: "include",
+        next: {
+          tags: [`usersByProject-${projectId}`],
+        },
+      }
+    );
+
+    const data = await res.json();
+    console.log(data, "===here is the data");
+    return data;
+  } catch (error: unknown) {
+    console.log(error);
+  }
+};
+
+export const assignUserToTask = async (taskId: string, userId: string) => {
+  const token = await getCookie("token");
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/assign/task/${taskId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `token=${token}`,
+        },
+        body: JSON.stringify({ userId }),
+        credentials: "include",
+      }
+    );
+
+    const data = await res.json();
+    return data;
+  } catch (error: unknown) {
+    console.log(error);
+  }
+};
+
+export const assignUserToProject = async (projectId: string, userId: string) => {
+  const token = await getCookie("token");
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/assign/project/${projectId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `token=${token}`,
+        },
+        body: JSON.stringify({ userId }),
+        credentials: "include",
+      }
+    );
+
+    const data = await res.json();
+    return data;
+  } catch (error: unknown) {
+    console.log(error);
+  }
+};

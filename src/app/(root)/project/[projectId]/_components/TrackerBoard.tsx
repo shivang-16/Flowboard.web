@@ -52,6 +52,8 @@ export default function TrackerBoard() { // Remove params from here
   const [columnNames, setColumnNames] = useState<string[]>([]);
   const [columnInputValues, setColumnInputValues] = useState<string[]>([]);
   const [jobsCache, setJobsCache] = useState<Job[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(true); // Add loading state for tasks
+  const [loadingProject, setLoadingProject] = useState(true); // Add loading state for project
 
   console.log(project)
 
@@ -82,6 +84,7 @@ export default function TrackerBoard() { // Remove params from here
 
 const fetchTasks = async () => {
   try {
+    setLoadingTasks(true); // Set loading to true before fetching tasks
     const data = await getTasksByProjectId(projectId);
     if (data?.success && Array.isArray(data.tasks)) {
       const organizedTasks = columnNames.reduce((acc: Tasks, label) => {
@@ -92,16 +95,20 @@ const fetchTasks = async () => {
     }
   } catch (error) {
     console.error("Error fetching tasks:", error);
+  } finally {
+    setLoadingTasks(false); // Set loading to false after fetching tasks
   }
 };
 
 useEffect(() => {
   const loadProjectAndTasks = async () => {
     try {
+      setLoadingProject(true); // Set loading to true before fetching project
       const projectRes = await getProjects(projectId);
       if (projectRes.success && projectRes.project) {
         setProject(projectRes.project);
         initializeTasks(projectRes.project.statuses || []);
+        setLoadingTasks(true); // Set loading to true before fetching tasks
         const tasksData = await getTasksByProjectId(projectId);
         if (tasksData?.success && Array.isArray(tasksData.tasks)) {
           const organizedTasks = (projectRes.project.statuses || []).reduce((acc: Tasks, statusObj: { label: string; value: number }) => {
@@ -110,9 +117,14 @@ useEffect(() => {
           }, {});
           setTasks(organizedTasks);
         }
+      } else {
+        setProject(null); // Handle case where project is not found
       }
     } catch (error) {
       console.error("Error loading project or tasks:", error);
+    } finally {
+      setLoadingProject(false); // Set loading to false after loading project
+      setLoadingTasks(false); // Set loading to false after loading tasks
     }
   };
   loadProjectAndTasks();
@@ -224,89 +236,128 @@ useEffect(() => {
       <div className="flex-1 overflow-hidden mt-3">
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="flex gap-6 w-full h-full overflow-x-auto">
-            {columnNames.map((listName, index) => (
-              <Droppable droppableId={listName} key={listName}>
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="min-w-[300px] max-w-[350px] bg-[#17161c] rounded-3xl p-4 h-full overflow-auto relative group"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={columnInputValues[index]}
-                          onChange={(e) => handleInputChange(index, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleColumnNameChange(index, e.currentTarget.value);
-                            }
-                          }}
-                          className="text-sm font-semibold text-gray-300 bg-transparent focus:bg-[#353345] focus:p-1 rounded focus:outline-none"
-                        />
-                        <span className="text-sm text-gray-500">
-                          {tasks[listName]?.length || 0}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          className="p-1 hover:bg-[#353345] rounded transition-colors"
-                          onClick={() => {
-                            setCurrentColumnName(listName);
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Plus className="w-4 h-4 text-gray-400" />
-                        </button>
-                        <button
-                          onClick={() => handleRemoveColumn(index, listName)}
-                          className="p-1 hover:bg-[#353345] rounded transition-colors"
-                        >
-                          <Minus className="w-4 h-4 text-gray-400" />
-                        </button>
-                      </div>
-                    </div>
-
+            {loadingProject ? (
+              // Skeleton Loader for columns
+              <div className="flex gap-6">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="min-w-[300px] max-w-[350px] bg-[#17161c] rounded-3xl p-4 h-full animate-pulse">
+                    <div className="h-6 bg-gray-700 rounded w-3/4 mb-4"></div>
                     <div className="space-y-3">
-                {tasks[listName]?.map((task: Task, index: number) => (
-                  <Draggable 
-                    key={task._id} 
-                    draggableId={task._id} 
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        style={{
-                          ...provided.draggableProps.style,
-                          opacity: snapshot.isDragging ? 0.8 : 1,
-                        }}
-                      >
-                        <TaskCard 
-                          task={task}
-                          boardId={projectId}
-                          columnId={listName}
-                          taskIndex={index}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                      {provided.placeholder}
+                      <div className="h-12 bg-gray-700 rounded"></div>
+                      <div className="h-12 bg-gray-700 rounded"></div>
+                      <div className="h-12 bg-gray-700 rounded"></div>
                     </div>
                   </div>
-                )}
-              </Droppable>
-            ))}
-            <button
-              onClick={handleAddColumn}
-              className="p-2 h-10 bg-[#2F2D3B] text-gray-400 hover:bg-[#353345] rounded-lg transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
+                ))}
+              </div>
+            ) : (
+              columnNames.map((listName, index) => (
+                <Droppable droppableId={listName} key={listName}>
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="min-w-[300px] max-w-[350px] bg-[#17161c] rounded-3xl p-4 h-full overflow-auto relative group"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={columnInputValues[index]}
+                            onChange={(e) => handleInputChange(index, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleColumnNameChange(index, e.currentTarget.value);
+                              }
+                            }}
+                            className="text-sm font-semibold text-gray-300 bg-transparent focus:bg-[#353345] focus:p-1 rounded focus:outline-none"
+                          />
+                          <span className="text-sm text-gray-500">
+                            {tasks[listName]?.length || 0}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="p-1 hover:bg-[#353345] rounded transition-colors"
+                            onClick={() => {
+                              setCurrentColumnName(listName);
+                              setIsModalOpen(true);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveColumn(index, listName)}
+                            className="p-1 hover:bg-[#353345] rounded transition-colors"
+                          >
+                            <Minus className="w-4 h-4 text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {loadingTasks ? (
+                          // Skeleton Loader for tasks
+                          <div className="animate-pulse space-y-3">
+                            <div className="h-12 bg-gray-700 rounded"></div>
+                            <div className="h-12 bg-gray-700 rounded"></div>
+                            <div className="h-12 bg-gray-700 rounded"></div>
+                          </div>
+                        ) : tasks[listName]?.length > 0 ? (
+                          // Render Task Cards
+                          tasks[listName]?.map((task: Task, index: number) => (
+                            <Draggable 
+                              key={task._id} 
+                              draggableId={task._id} 
+                              index={index}
+                            >
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                    opacity: snapshot.isDragging ? 0.8 : 1,
+                                  }}
+                                >
+                                  <TaskCard 
+                                    task={task}
+                                    boardId={projectId}
+                                    columnId={listName}
+                                    taskIndex={index}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        ) : (
+                          // Show Create Task Button if no tasks
+                          <button
+                            className="w-full p-2 mt-4 text-center text-gray-400 border border-dashed border-gray-600 rounded-lg hover:border-gray-400 transition-colors"
+                            onClick={() => {
+                              setCurrentColumnName(listName);
+                              setIsModalOpen(true);
+                            }}
+                          >
+                            + Create Task
+                          </button>
+                        )}
+                        {provided.placeholder}
+                      </div>
+                    </div>
+                  )}
+                </Droppable>
+              ))
+            )}
+            {!loadingProject && (
+              <button
+                onClick={handleAddColumn}
+                className="p-2 h-10 bg-[#2F2D3B] text-gray-400 hover:bg-[#353345] rounded-lg transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </DragDropContext>
       </div>

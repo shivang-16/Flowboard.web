@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { createTask } from '@/actions/task_action';
 import toast from 'react-hot-toast';
 import { IUser } from '@/components/types';
+import { getUsersByProjectId } from '@/actions/user_actions'; // Import the action
 
 export type Priority = 'high' | 'medium' | 'low';
 
@@ -24,15 +25,15 @@ interface CreateTaskDialogProps {
   onOpenChange: (open: boolean) => void;
   boardId: string;
   columnId: string;
-  users?: Array<{ id: string; name: string }>;
+  // users?: Array<{ id: string; name: string }>; // Remove this prop
 }
 
-const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ 
-  open, 
-  onOpenChange, 
+const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
+  open,
+  onOpenChange,
   boardId,
   columnId,
-  users
+  // users // Remove this prop
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -40,6 +41,22 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const [assignedTo, setAssignedTo] = useState<string>('');
   const [dueDate, setDueDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [projectUsers, setProjectUsers] = useState<IUser[]>([]); // New state for project users
+
+  // Fetch users for the project
+  React.useEffect(() => {
+    const fetchProjectUsers = async () => {
+      if (boardId) {
+        const res = await getUsersByProjectId(boardId);
+        if (res.success) {
+          setProjectUsers(res.users);
+        } else {
+          console.error('Failed to fetch project users:', res.message);
+        }
+      }
+    };
+    fetchProjectUsers();
+  }, [boardId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,21 +164,27 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                 </Select>
               </div>
 
-              {/* <div className="grid gap-2">
+              <div className="grid gap-2">
                 <Label htmlFor="assignedTo">Assign To</Label>
                 <Select value={assignedTo} onValueChange={setAssignedTo}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select team member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
+                    {projectUsers.length > 0 ? (
+                      projectUsers.map(user => (
+                        <SelectItem key={user._id} value={user._id}>
+                          {user.firstname}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-users" disabled>
+                        No users available
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
-              </div> */}
+              </div>
             </div>
 
             <div className="grid gap-2">

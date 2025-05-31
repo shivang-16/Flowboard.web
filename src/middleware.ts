@@ -5,12 +5,13 @@ import { getUser } from "./actions/user_actions";
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const token = getTokenFromStorage(request);
-  const userData = await getUser();
-
-  const isRootPath = path === "/";
   
   if (token && (path === "/login" || path === "/signup")) {
     return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (!token && (path.startsWith("/project") || path === "/")) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
@@ -29,5 +30,6 @@ export const config = {
     "/signup",
     "/",
     "/project",
+    "/project/:path*", // Add this to match /project and its sub-paths
   ],
 };

@@ -12,9 +12,9 @@ type Project = {
   owner: string; // Assuming owner is a string ID
   tasks: string[]; // Assuming tasks are string IDs
   analytics: {
-    totalTasks: number;
+    todoTask: number;
     completedTasks: number;
-    overdueTasks: number;
+    inProgressTasks: number;
   };
   updatedAt: string;
   createdAt: string;
@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true); // Add loading state
   const router = useRouter(); 
 
   useEffect(() => {
@@ -38,6 +39,8 @@ export default function Dashboard() {
         }
       } catch (error) {
         toast.error("Error fetching projects");
+      } finally {
+        setLoading(false); // Set loading to false after fetch
       }
     };
     fetchProjects();
@@ -118,49 +121,86 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {projects.length > 0 ? (
-          projects.map((project) => {
-            const total = project.analytics.totalTasks;
-            const donePercent = total > 0 ? (project.analytics.completedTasks / total) * 100 : 0;
-            const progressPercent = total > 0 ? ((total - project.analytics.completedTasks - project.analytics.overdueTasks) / total) * 100 : 0;
-
-            return (
-              <div
-                key={project._id}
-                className="bg-[#161b22] border cursor-pointer border-gray-700 rounded-xl p-5 hover:shadow-lg hover:shadow-[#1f6feb]/30 transition duration-200"
-                onClick={() => router.push(`/project/${project._id}`)} // Add onClick handler
-              >
-                <div className="flex justify-between items-center mb-3">
-                  <h2 className="font-semibold text-lg text-white">{project.name}</h2>
-                  <span className="text-xs text-gray-500">Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
-                </div>
-
-                <p className="text-sm text-gray-500 mb-4 italic">{project.description || "No description provided"}</p>
-
-                <div className="flex justify-between text-xs font-medium text-gray-400 mb-2">
-                  <span>✅ {project.analytics.completedTasks} done</span>
-                  <span>🚧 {total - project.analytics.completedTasks - project.analytics.overdueTasks} in progress</span>
-                  <span>📋 {project.analytics.overdueTasks} to do</span>
-                </div>
-
-                <div className="w-full h-2 bg-gray-800 rounded-full relative overflow-hidden">
-                  <div
-                    className="absolute top-0 left-0 h-full bg-green-500"
-                    style={{ width: `${donePercent}%` }}
-                  ></div>
-                  <div
-                    className="absolute top-0 h-full bg-purple-500"
-                    style={{ width: `${progressPercent}%`, left: `${donePercent}%` }}
-                  ></div>
-                </div>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {[...Array(3)].map((_, index) => (
+            <div
+              key={index}
+              className="bg-[#161b22] border border-gray-700 rounded-xl p-5 animate-pulse"
+            >
+              <div className="flex justify-between items-center mb-3">
+                <div className="h-6 bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-700 rounded w-1/4"></div>
               </div>
-            );
-          })
-        ) : (
-          <p className="text-center text-gray-500 col-span-full">No projects available. Create one!</p>
-        )}
-      </div>
+              <div className="h-4 bg-gray-700 rounded w-full mb-4"></div>
+              <div className="h-4 bg-gray-700 rounded w-2/3 mb-4"></div>
+              <div className="flex justify-between text-xs font-medium mb-2">
+                <div className="h-4 bg-gray-700 rounded w-1/4"></div>
+                <div className="h-4 bg-gray-700 rounded w-1/4"></div>
+                <div className="h-4 bg-gray-700 rounded w-1/4"></div>
+              </div>
+              <div className="w-full h-2 bg-gray-700 rounded-full"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {projects.length > 0 ? (
+            projects.map((project) => {
+              const total = project.analytics.todoTask + project.analytics.completedTasks + project.analytics.inProgressTasks + project.analytics.todoTask;
+              const donePercent = total > 0 ? (project.analytics.completedTasks / total) * 100 : 0;
+              const progressPercent = total > 0 ? ((total - project.analytics.completedTasks - project.analytics.todoTask) / total) * 100 : 0;
+
+              return (
+                <div
+                  key={project._id}
+                  className="bg-[#161b22] border cursor-pointer border-gray-700 rounded-xl p-5 hover:shadow-lg hover:shadow-[#1f6feb]/30 transition duration-200"
+                  onClick={() => router.push(`/project/${project._id}`)} // Add onClick handler
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h2 className="font-semibold text-lg text-white">{project.name}</h2>
+                    <span className="text-xs text-gray-500">Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
+                  </div>
+
+                  <p className="text-sm text-gray-500 mb-4 italic">{project.description || "No description provided"}</p>
+
+                  <div className="flex justify-between text-xs font-medium text-gray-400 mb-2">
+                    <span>📋 {project.analytics.todoTask} to do</span>
+                    <span>🚧 {project.analytics.inProgressTasks} in progress</span>
+                    <span>✅ {project.analytics.completedTasks} done</span>
+                  </div>
+
+                  <div className="w-full h-2 bg-gray-800 rounded-full relative overflow-hidden">
+                    {/* To Do segment */}
+                    <div
+                      className="absolute top-0 left-0 h-full bg-yellow-500" // Yellow for To Do
+                      style={{ width: `${(project.analytics.todoTask / total) * 100}%` }}
+                    ></div>
+                    {/* In Progress segment */}
+                    <div
+                      className="absolute top-0 h-full bg-purple-500" // Purple for In Progress
+                      style={{
+                        width: `${(project.analytics.inProgressTasks / total) * 100}%`,
+                        left: `${(project.analytics.todoTask / total) * 100}%`,
+                      }}
+                    ></div>
+                    {/* Done segment */}
+                    <div
+                      className="absolute top-0 h-full bg-green-500" // Green for Done
+                      style={{
+                        width: `${(project.analytics.completedTasks / total) * 100}%`,
+                        left: `${((project.analytics.todoTask + project.analytics.inProgressTasks) / total) * 100}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-gray-500 col-span-full">No projects available. Create one!</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
