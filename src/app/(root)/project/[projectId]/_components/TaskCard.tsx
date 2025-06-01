@@ -12,6 +12,23 @@ import { IUser } from '@/types';
 import { deleteTask } from '@/actions/task_action';
 import CreateTaskDialog from './CreateTaskModel';
 
+// Function to generate a color based on user's ID
+const getAvatarColor = (userId: string) => {
+  const colors = [
+    'bg-blue-500',
+    'bg-purple-500',
+    'bg-green-500',
+    'bg-yellow-500',
+    'bg-red-500',
+    'bg-pink-500',
+    'bg-indigo-500',
+    'bg-teal-500'
+  ];
+  
+  // Use the sum of char codes to determine the color
+  const charCodeSum = userId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return colors[charCodeSum % colors.length];
+};
 
 interface TaskCardProps {
   task: Task;
@@ -118,6 +135,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();
   const createdByUser = task.createdBy;
   const assignedToUser = task.assignedTo ? task.assignedTo : null;
+  const assignedUserId = assignedToUser ? assignedToUser._id : '';
 
   return (
     <>
@@ -182,11 +200,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
               </Badge>
               <div className="relative">
                 <Avatar 
-                  className="w-5 h-5 cursor-pointer bg-gray-300"
+                  className={`w-5 h-5 cursor-pointer ${assignedUserId ? getAvatarColor(assignedUserId) : 'bg-gray-300'}`}
                   onClick={handleAvatarClick}
                 >
-                  <AvatarFallback className="text-xs text-gray-600">
-                    {task.assignedTo ? task.assignedTo.firstname[0] : '+'}
+                  <AvatarFallback className="text-xs text-white font-medium">
+                    {task.assignedTo ? task.assignedTo.firstname.charAt(0).toUpperCase() : '+'}
                   </AvatarFallback>
                 </Avatar>
                 
@@ -200,9 +218,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
                           className="px-3 py-1 text-sm hover:bg-slate-700 cursor-pointer flex items-center gap-2"
                           onClick={() => handleAssignUser(user._id)}
                         >
-                          <Avatar className="w-4 h-4">
-                            <AvatarFallback className="text-xs">
-                              {user.firstname[0]}
+                          <Avatar className={`w-4 h-4 ${getAvatarColor(user._id)}`}>
+                            <AvatarFallback className="text-xs text-white font-medium">
+                              {user.firstname.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <span>{user.firstname}</span>
@@ -231,9 +249,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
             {/* Assigned To */}
             {assignedToUser && (
               <div className="flex items-center my-2 text-xs text-gray-600">
-                <Avatar className="w-5 h-5 mr-2">
-                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                    {assignedToUser.avatar || assignedToUser.firstname}
+                <Avatar className={`w-5 h-5 mr-2 ${getAvatarColor(assignedToUser._id)}`}>
+                  <AvatarFallback className="text-xs text-white font-medium">
+                    {assignedToUser.firstname.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <span>Assigned to {assignedToUser.firstname}</span>

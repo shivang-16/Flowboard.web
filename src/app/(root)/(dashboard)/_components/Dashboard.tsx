@@ -3,16 +3,16 @@
 import { useState, useEffect } from "react";
 import { createProject, getProjects, updateProject, deleteProject } from "@/actions/project_actions";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation"; // Import useRouter
-import { Edit, Trash } from "lucide-react"; // Import icons
-import { Button } from "@/components/ui/button"; // Import Button component
+import { useRouter } from "next/navigation"; 
+import { Edit, Trash } from "lucide-react"; 
+import { Button } from "@/components/ui/button"; 
 
 type Project = {
-  _id: string; // Assuming _id from MongoDB
+  _id: string; 
   name: string;
   description?: string;
-  owner: string; // Assuming owner is a string ID
-  tasks: string[]; // Assuming tasks are string IDs
+  owner: string; 
+  tasks: string[]; 
   analytics: {
     todoTask: number;
     completedTasks: number;
@@ -29,7 +29,7 @@ export default function Dashboard() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true); 
   const router = useRouter(); 
 
   useEffect(() => {
@@ -109,11 +109,11 @@ export default function Dashboard() {
       <div className="flex justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2 text-white">Projects</h1>
-          <p className="text-sm text-gray-400 mb-6">{projects.length} open &nbsp; · &nbsp; {projects.length} closed</p>
+          <p className="text-sm text-gray-400 mb-6">{projects.length} open &nbsp;</p>
         </div>
         <div className="mb-6">
           <button
-            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            className="bg-blue-900 text-white py-2 px-4 rounded hover:bg-blue-600"
             onClick={() => {
               setIsEditMode(false);
               setCurrentProject(null);
@@ -147,14 +147,14 @@ export default function Dashboard() {
             ></textarea>
             <div className="flex justify-end">
               <button
-                className="bg-red-500 text-white py-2 px-4 rounded mr-2"
+                className="bg-gray-800 text-white py-2 px-4 rounded mr-2"
                 onClick={() => setIsModalOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="bg-green-500 text-white py-2 px-4 rounded"
-                onClick={handleCreateProject}
+              className="bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded"
+              onClick={handleCreateProject}
               >
                 {isEditMode ? "Update" : "Create"}
               </button>

@@ -144,6 +144,13 @@ const Login = () => {
             </div>
             <button
               type="submit"
+              className="w-full py-2 px-4 bg-gray-800 my-2 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-white"
+              onClick={() => setFormData({ email: 'shivangyadav121@gmail.com', password: 'hello' }) }
+            >
+              Login as guest
+            </button>
+            <button
+              type="submit"
               className="w-full py-2 px-4 bg-white text-black rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white"
             >
               Sign in

@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { tags } from './data'; // Remove 'users' import from here
-import {IUser} from "@/types"; // Import User type
+import {IUser} from "@/types"; 
 
 interface Project {
   _id: string;
@@ -19,16 +18,51 @@ interface Project {
   createdAt: string;
 }
 
+// Update the interface to include new props
 interface HeaderProps {
   project: Project | null;
   onSearch: (query: string) => void;
   onPriorityFilter: (priority: string) => void;
   onUserFilter: (userId: string) => void;
-  users?: IUser[]; // Add users prop
+  users?: IUser[];
+  allUsers?: IUser[];
+  onAssignUser: (userId: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ project, onSearch, onPriorityFilter, onUserFilter, users }) => {
-   
+// Function to generate a color based on user's name
+const getAvatarColor = (userId: string) => {
+  const colors = [
+    'bg-blue-500',
+    'bg-purple-500',
+    'bg-green-500',
+    'bg-yellow-500',
+    'bg-red-500',
+    'bg-pink-500',
+    'bg-indigo-500',
+    'bg-teal-500'
+  ];
+  
+  // Use the sum of char codes to determine the color
+  const charCodeSum = userId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return colors[charCodeSum % colors.length];
+};
+
+export const Header: React.FC<HeaderProps> = ({ 
+  project, 
+  onSearch, 
+  onPriorityFilter, 
+  onUserFilter, 
+  users, 
+  allUsers,
+  onAssignUser 
+}) => {
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  
+  // Filter out users that are already in the project
+  const availableUsers = allUsers?.filter(user => 
+    !users?.some(projectUser => projectUser._id === user._id)
+  ) || [];
+  
   return (
     <div className="mb-3">
       {/* Upper part with gradient background */}
@@ -48,19 +82,51 @@ export const Header: React.FC<HeaderProps> = ({ project, onSearch, onPriorityFil
           <div className="flex items-center gap-3">
             <div className="flex items-center">
               <div className="flex -space-x-2 mr-2">
-                {/* Display project members from the 'users' prop */}
                 {users && users.map((user) => (
-                  <img
-                    key={user._id} // Use user._id as key
-                    src={user.avatar || '/assets/default-profile.png'} // Use default avatar if not available
-                    alt={user.firstname}
-                    className="w-8 h-8 rounded-full border-2 border-white/10"
-                  />
+                  <div
+                    key={user._id}
+                    className={`w-8 h-8 rounded-full border-2 border-white/10 ${getAvatarColor(user._id)} flex items-center justify-center text-white font-medium`}
+                  >
+                    {user.firstname ? user.firstname.charAt(0).toUpperCase() : '?'}
+                  </div>
                 ))}
               </div>
-              <button className="px-3 py-1.5 text-sm text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors">
-                Invite member
-              </button>
+              
+              {/* Invite member dropdown */}
+              <div className="relative">
+                <button 
+                  className="px-3 py-1.5 text-sm text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                  onClick={() => setShowUserDropdown(!showUserDropdown)}
+                >
+                  Invite member
+                </button>
+                
+                {showUserDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-[#1F1D2B] rounded-lg shadow-lg z-10 py-2 max-h-60 overflow-y-auto">
+                    {availableUsers.length > 0 ? (
+                      availableUsers.map(user => (
+                        <div 
+                          key={user._id} 
+                          className="px-4 py-2 text-sm text-white hover:bg-white/10 cursor-pointer flex items-center gap-2"
+                          onClick={() => {
+                            onAssignUser(user._id);
+                            setShowUserDropdown(false);
+                          }}
+                        >
+                          <div 
+                            className={`w-6 h-6 rounded-full ${getAvatarColor(user._id)} flex items-center justify-center text-white font-medium text-xs`}
+                          >
+                            {user.firstname ? user.firstname.charAt(0).toUpperCase() : '?'}
+                          </div>
+                          <span>{user.firstname} {user.lastname}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-sm text-white/50">No users available to invite</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

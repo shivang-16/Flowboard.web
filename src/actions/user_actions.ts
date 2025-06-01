@@ -168,14 +168,14 @@ export const assignUserToProject = async (projectId: string, userId: string) => 
   const token = await getCookie("token");
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/assign/project/${projectId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/assign/project`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Cookie: `token=${token}`,
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId, projectId }),
         credentials: "include",
       }
     );

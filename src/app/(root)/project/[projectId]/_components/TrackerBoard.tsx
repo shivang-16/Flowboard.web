@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { getProjects, updateProject } from "@/actions/project_actions"; // Import getProjects
+import { getProjects, updateProject } from "@/actions/project_actions"; 
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { Header } from "./Header";
 import { Plus, Minus } from 'lucide-react';
-import { useParams } from 'next/navigation'; // Import useParams
+import { useParams } from 'next/navigation'; 
 import CreateTaskDialog from "./CreateTaskModel";
 import { getTasksByProjectId, updateTask } from '@/actions/task_action';
 import TaskCard from './TaskCard';
-import { Task } from "@/types";
+import { Task, IUser } from "@/types";
+import { getUsersByProjectId, getAllUsers, assignUserToProject } from '@/actions/user_actions';
 
 interface Job {
   id: string;
@@ -41,7 +42,7 @@ interface Project {
   createdAt: string;
 }
 
-export default function TrackerBoard() { // Remove params from here
+export default function TrackerBoard() {
   const { projectId }: {projectId: string} = useParams() ; // Use useParams hook to get projectId
   console.log(projectId)
   const user = useAppSelector(state => state.user.user);
@@ -57,7 +58,8 @@ export default function TrackerBoard() { // Remove params from here
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [userFilter, setUserFilter] = useState<string>('');
-
+  const [projectUsers, setProjectUsers] = useState<IUser[]>([]); // For users already in the project
+  const [allUsers, setAllUsers] = useState<IUser[]>([]); // For all users in the system
   console.log(project)
 
   const [newJob, setNewJob] = useState({
@@ -107,11 +109,24 @@ const fetchTasks = async () => {
 useEffect(() => {
   const loadProjectAndTasks = async () => {
     try {
-      setLoadingProject(true); // Set loading to true before fetching project
+      setLoadingProject(true);
       const projectRes = await getProjects(projectId);
       if (projectRes.success && projectRes.project) {
         setProject(projectRes.project);
         initializeTasks(projectRes.project.statuses || []);
+        
+        // Fetch project users
+        const projectUsersRes = await getUsersByProjectId(projectId);
+        if (projectUsersRes.success) {
+          setProjectUsers(projectUsersRes.users);
+        }
+        
+        // Fetch all users
+        const allUsersRes = await getAllUsers();
+        if (allUsersRes.success) {
+          setAllUsers(allUsersRes.users);
+        }
+        
         setLoadingTasks(true); // Set loading to true before fetching tasks
         const tasksData = await getTasksByProjectId(projectId);
         if (tasksData?.success && Array.isArray(tasksData.tasks)) {
@@ -122,13 +137,13 @@ useEffect(() => {
           setTasks(organizedTasks);
         }
       } else {
-        setProject(null); // Handle case where project is not found
+        setProject(null);
       }
     } catch (error) {
-      console.error("Error loading project or tasks:", error);
+      console.error("Error loading project, tasks, or users:", error);
     } finally {
-      setLoadingProject(false); // Set loading to false after loading project
-      setLoadingTasks(false); // Set loading to false after loading tasks
+      setLoadingProject(false);
+      setLoadingTasks(false);
     }
   };
   loadProjectAndTasks();
@@ -141,7 +156,24 @@ useEffect(() => {
     }
   }, [isModalOpen, project]); 
 
-
+  const handleAssignUserToProject = async (userId: string) => {
+    try {
+      const result = await assignUserToProject(projectId, userId);
+      if (result.success) {
+        // Refresh project users after successful assignment
+        const projectUsersRes = await getUsersByProjectId(projectId);
+        if (projectUsersRes.success) {
+          setProjectUsers(projectUsersRes.users);
+        }
+        toast.success("User added to project successfully");
+      } else {
+        toast.error(result.message || "Failed to add user to project");
+      }
+    } catch (error) {
+      console.error("Error assigning user to project:", error);
+      toast.error("Failed to add user to project");
+    }
+  };
 
 useEffect(() => {
   const handleTaskUpdate = () => {
@@ -345,12 +377,15 @@ useEffect(() => {
 
   return (
     <div className="flex flex-col w-full h-[91vh] overflow-hidden pl-8">
-<Header 
-  project={project} 
-  onSearch={setSearchQuery}
-  onPriorityFilter={setPriorityFilter}
-  onUserFilter={setUserFilter}
-/>
+      <Header 
+        project={project} 
+        onSearch={handleSearch}
+        onPriorityFilter={handlePriorityFilter}
+        onUserFilter={handleUserFilter}
+        users={projectUsers} 
+        allUsers={allUsers}
+        onAssignUser={handleAssignUserToProject} 
+      />
       <div className="flex-1 overflow-hidden mt-3">
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="flex gap-6 w-full h-full overflow-x-auto">
@@ -490,3 +525,5 @@ useEffect(() => {
     </div>
   );
 }
+
+
