@@ -16,16 +16,9 @@ export default async function MainLayout({
   const data = await getUser() || null
 
   return (
-    <>
-      {/* Navbar at the top */}
-      
+    <>      
       <div className="flex overflow-hidden">
-        {/* Sidebar fixed on the left */}
-        <div className="fixed top-0 left-0 h-full w-16 bg-transparent">
-          <Sidebar />
-        </div>
-        {/* Main content area for children */}
-        <div className="ml-16 p-4 w-full">
+        <div className="p-4 w-full">
           {children}
         </div>
       </div>

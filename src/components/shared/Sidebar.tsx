@@ -13,7 +13,7 @@ const Sidebar = () => {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col items-center justify-between h-full text-white ml-6 py-4">
+    <div className="flex flex-col items-center justify-between h-full text-white py-4">
       {/* Logo at the top */}
       <Link href={'/'} className="flex items-center">
         <Image src='/logo.png' alt="Flowboard Logo" width={35} height={35} className='rounded-lg'/>

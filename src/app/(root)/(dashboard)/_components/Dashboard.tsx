@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation"; 
 import { Edit, Trash } from "lucide-react"; 
 import { Button } from "@/components/ui/button"; 
+import Image from "next/image";
+import Link from "next/link";
 
 type Project = {
   _id: string; 
@@ -105,7 +107,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-gray-200 p-6">
+    <div className="min-h-screen text-gray-200 px-6">
+      <div className="flex flex-col items-center justify-between h-full text-white py-2 mb-8">
+      {/* Logo at the top */}
+      <Link href={'/'} className="flex items-center space-x-2">
+        <Image src='/logo.png' alt="Flowboard Logo" width={40} height={40} className='rounded-lg'/>
+        <h1 className=" text-2xl font-bold">FLowboard</h1>
+      </Link>
+      
+     
+    </div>
       <div className="flex justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2 text-white">Projects</h1>
