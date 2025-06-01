@@ -76,9 +76,9 @@ const Login = () => {
 
   const typewriterText = useTypewriter(
     [
-      'Empowering your job search with AI.',
-      'Your career, reimagined with JobGPT.',
-      'Find your dream job effortlessly.',
+      'Empowering your task management with AI.',
+      'Your Org, reimagined with FlowBoard.',
+      'Track and manage your projects effortlessly.',
     ],
     100 // Speed of typing in milliseconds
   );

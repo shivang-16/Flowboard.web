@@ -11,6 +11,7 @@ export const createProject = async (project: {name: string, description: string}
                 'Content-Type': 'application/json',
                 Cookie: `token=${token}`,
             },
+            credentials: "include",
             body: JSON.stringify(project),
         });
         return await res.json();
@@ -30,6 +31,7 @@ export const getProjects = async (id?: string) => {
                 'Content-Type': 'application/json',
                 Cookie: `token=${token}`,
             },
+            credentials: "include"
         });
         return await res.json();
     } catch (error) {
@@ -47,6 +49,7 @@ export const updateProject = async (id: string, updates: any) => {
                 'Content-Type': 'application/json',
                 Cookie: `token=${token}`,
             },
+            credentials: 'include',
             body: JSON.stringify(updates),
         });
         return await res.json();
@@ -65,6 +68,7 @@ export const deleteProject = async (id: string) => {
                 'Content-Type': 'application/json',
                 Cookie: `token=${token}`,
             },
+            credentials: 'include',
         });
         return await res.json();
     } catch (error) {

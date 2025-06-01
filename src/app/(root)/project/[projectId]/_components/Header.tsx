@@ -105,10 +105,10 @@ export const Header: React.FC<HeaderProps> = ({ project, onSearch, onPriorityFil
                 className="pl-9 pr-4 py-2 w-64 text-sm bg-white/10 border-none text-white placeholder-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
               />
             </div>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+            {/* <button className="flex items-center gap-2 px-3 py-2 text-sm text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
               <SlidersHorizontal className="w-4 h-4" />
               Filters
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

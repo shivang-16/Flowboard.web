@@ -29,6 +29,7 @@ export const getTasks = async () => {
                 'Content-Type': 'application/json',
                 Cookie: `token=${token}`,
             },
+            credentials: "include"
         });
         return await res.json();
     } catch (error) {

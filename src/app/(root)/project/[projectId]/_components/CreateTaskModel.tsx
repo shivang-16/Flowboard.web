@@ -87,10 +87,12 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
 
       if(res.success) {
         toast.success(res.message);
-        window.dispatchEvent(new Event('task-updated'));
-     } else {
+        // Replace simple event with CustomEvent to match TaskCard.tsx
+        window.dispatchEvent(new CustomEvent('task-updated', {
+          detail: { taskId: initialData?._id || res.task?._id }
+        }));
+      } else {
         toast.error(res.message);
-
       }
 
       // Reset form

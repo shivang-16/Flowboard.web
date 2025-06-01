@@ -35,7 +35,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
     }
   };
   const [showEditTask, setShowEditTask] = useState(false);
-  const [showDeleteTask, setShowDeleteTask] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
   console.log(task, "here is the task")
@@ -56,9 +55,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, boardId, columnId, taskIndex 
     }
   };
 
-  const getUser = (userId: string) => {
-    return null
-  };
+
 
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);

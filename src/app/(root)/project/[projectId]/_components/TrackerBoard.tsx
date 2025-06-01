@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { getProjects } from "@/actions/project_actions"; // Import getProjects
+import { getProjects, updateProject } from "@/actions/project_actions"; // Import getProjects
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { Header } from "./Header";
@@ -145,6 +145,7 @@ useEffect(() => {
 
 useEffect(() => {
   const handleTaskUpdate = () => {
+    console.log("Task updated event received");
     fetchTasks();
     if (project) {
       getProjects(projectId).then(res => {
@@ -157,21 +158,40 @@ useEffect(() => {
   return () => {
     window.removeEventListener('task-updated', handleTaskUpdate);
   };
-}, [projectId]); 
+}, [projectId, project]); // Add project as a dependency
 
-  const handleAddColumn = () => {
+  const handleAddColumn = async () => {
+    if (!project) return;
+    
     const newColumnName = `new-column-${columnNames.length + 1}`;
     const updatedColumnNames = [...columnNames, newColumnName];
 
+    // Update local state
     setTasks({ ...tasks, [newColumnName]: [] });
     setColumnNames(updatedColumnNames);
     setColumnInputValues([...columnInputValues, newColumnName]);
 
-    // TODO: Implement backend action to add status to project
-    toast("Column added locally. Backend update needed.");
+    // Create updated statuses array for the project
+    const updatedStatuses = [...(project.statuses || []), { label: newColumnName, value: 0 }];
+    
+    // Call updateProject API to persist changes
+    try {
+      const result = await updateProject(projectId, { statuses: updatedStatuses });
+      if (result.success) {
+        setProject({ ...project, statuses: updatedStatuses });
+        toast.success("Column added successfully");
+      } else {
+        toast.error(result.error || "Failed to add column");
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error("Failed to add column");
+    }
   };
 
-  const handleColumnNameChange = (index: number, newName: string) => {
+  const handleColumnNameChange = async (index: number, newName: string) => {
+    if (!project) return;
+    
     const updatedColumnNames = [...columnNames];
     const oldName = updatedColumnNames[index];
     updatedColumnNames[index] = newName;
@@ -181,23 +201,34 @@ useEffect(() => {
     delete updatedTasks[oldName];
     setTasks(updatedTasks);
 
-    // TODO: Implement backend action to update status name in project
-    toast("Column name updated locally. Backend update needed.");
+    // Create updated statuses array for the project
+    const updatedStatuses = project.statuses.map((status, i) => 
+      i === index ? { ...status, label: newName } : status
+    );
+    
+    // Call updateProject API to persist changes
+    try {
+      const result = await updateProject(projectId, { statuses: updatedStatuses });
+      if (result.success) {
+        setProject({ ...project, statuses: updatedStatuses });
+        toast.success("Column renamed successfully");
+      } else {
+        toast.error(result.error || "Failed to rename column");
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error("Failed to rename column");
+    }
   };
 
-  const handleInputChange = (index: number, value: string) => {
-    const updatedInputValues = [...columnInputValues];
-    updatedInputValues[index] = value;
-    setColumnInputValues(updatedInputValues);
-  };
-
-  const handleRemoveColumn = (index: number, name: string) => {
-    if (tasks[name]?.length > 0) { // Use optional chaining
+  const handleRemoveColumn = async (index: number, name: string) => {
+    if (!project) return;
+    
+    if (tasks[name]?.length > 0) {
       toast.error("Cannot remove a column that is not empty");
       return;
     }
 
-    // TODO: Implement backend action to delete status from project
     const updatedTasks = { ...tasks };
     delete updatedTasks[name];
     setTasks(updatedTasks);
@@ -207,8 +238,48 @@ useEffect(() => {
     setColumnNames(updatedColumnNames);
     setColumnInputValues(updatedColumnInputValues);
 
-    toast("Column removed locally. Backend update needed.");
+    // Create updated statuses array for the project
+    const updatedStatuses = project.statuses.filter((_, i) => i !== index);
+    
+    // Call updateProject API to persist changes
+    try {
+      const result = await updateProject(projectId, { statuses: updatedStatuses });
+      if (result.success) {
+        setProject({ ...project, statuses: updatedStatuses });
+        toast.success("Column removed successfully");
+      } else {
+        toast.error(result.error || "Failed to remove column");
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error("Failed to remove column");
+    }
   };
+
+  const handleInputChange = (index: number, value: string) => {
+    const updatedInputValues = [...columnInputValues];
+    updatedInputValues[index] = value;
+    setColumnInputValues(updatedInputValues);
+  };
+
+  // const handleRemoveColumn = (index: number, name: string) => {
+  //   if (tasks[name]?.length > 0) { // Use optional chaining
+  //     toast.error("Cannot remove a column that is not empty");
+  //     return;
+  //   }
+
+  //   // TODO: Implement backend action to delete status from project
+  //   const updatedTasks = { ...tasks };
+  //   delete updatedTasks[name];
+  //   setTasks(updatedTasks);
+
+  //   const updatedColumnNames = columnNames.filter((_, i) => i !== index);
+  //   const updatedColumnInputValues = columnInputValues.filter((_, i) => i !== index);
+  //   setColumnNames(updatedColumnNames);
+  //   setColumnInputValues(updatedColumnInputValues);
+
+  //   toast("Column removed locally. Backend update needed.");
+  // };
 
   // console.log(tasks, "here outside tasks");
 
