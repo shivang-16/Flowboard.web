@@ -124,7 +124,7 @@ export default function Dashboard() {
         </div>
         <div className="mb-6">
           <button
-            className="bg-blue-900 text-white py-2 px-4 rounded hover:bg-blue-600"
+            className="bg-blue-900 text-white py-2 px-4 rounded hover:bg-blue-600 text-sm sm:text-base"
             onClick={() => {
               setIsEditMode(false);
               setCurrentProject(null);
@@ -133,7 +133,7 @@ export default function Dashboard() {
               setIsModalOpen(true);
             }}
           >
-            Create New Project
+            + Project
           </button>
         </div>
       </div>

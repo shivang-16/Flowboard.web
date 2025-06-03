@@ -410,7 +410,13 @@ useEffect(() => {
                     <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className="min-w-[300px] max-w-[350px] bg-[#17161c] rounded-3xl p-4 h-full overflow-auto relative group"
+                      className="min-w-[250px] max-w-[300px] bg-[#17161c] rounded-3xl p-4 h-full overflow-auto relative group flex-shrink-0 
+                        w-full 
+                        xs:w-[calc(100%-16px)]
+                        sm:w-[calc(50%-16px)]
+                        md:w-[calc(33.33%-20px)]
+                        lg:w-[calc(25%-24px)]
+                        xl:w-[calc(20%-20px)]"
                     >
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
@@ -506,7 +512,7 @@ useEffect(() => {
             {!loadingProject && (
               <button
                 onClick={handleAddColumn}
-                className="p-2 h-10 bg-[#2F2D3B] text-gray-400 hover:bg-[#353345] rounded-lg transition-colors"
+                className="p-2 h-10 bg-[#2F2D3B] text-gray-400 hover:bg-[#353345] rounded-lg transition-colors flex-shrink-0"
               >
                 <Plus className="w-5 h-5" />
               </button>

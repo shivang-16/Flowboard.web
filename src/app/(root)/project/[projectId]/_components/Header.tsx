@@ -65,18 +65,18 @@ export const Header: React.FC<HeaderProps> = ({
   
   return (
     <div className="mb-3">
-      {/* Upper part with gradient background */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600 rounded-t-3xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-white/70 mb-2">
+      {/* Upper section changes */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600 rounded-t-3xl p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
+          <div className="w-full sm:w-auto">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-white/70 mb-1 sm:mb-2">
+              {/* Breadcrumb text size adjustment */}
               <span>Tasks</span>
               <span>/</span>
               <span>{project?.name}</span>
             </div>
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-white">{project?.name}</h1>
-              <button className="text-sm text-white/80 hover:text-white">Change</button>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{project?.name}</h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -180,4 +180,4 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
     </div>
   );
-};
+}

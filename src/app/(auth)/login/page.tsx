@@ -86,7 +86,7 @@ const Login = () => {
   return (
     <div className="flex min-h-screen">
       {/* Left Side - Login Form */}
-      <div className="flex-[0.60] flex items-center justify-center bg-[#161414] text-white">
+      <div className="flex-1 md:flex-[0.60] flex items-center justify-center bg-[#161414] text-white">
         <div className="w-full max-w-md p-8">
           {/* Logo Section */}
           <div className="flex justify-center mb-8">
@@ -160,7 +160,7 @@ const Login = () => {
       </div>
 
       {/* Right Side - Branding */}
-      <div className="flex-[0.40] bg-gradient-to-br from-gray-900 to-black text-white flex items-center justify-center animate-gradient">
+      <div className="hidden md:flex flex-[0.40] bg-gradient-to-br from-gray-900 to-black text-white items-center justify-center animate-gradient">
         <div className="text-center">
           <h3 className="text-2xl font-semibold mb-4">{typewriterText}</h3>
           <p className="text-gray-500">Your ultimate go-to career companion.</p>
